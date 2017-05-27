@@ -1,0 +1,86 @@
+---
+- hosts: all
+  sudo: true
+  tasks:
+  - name: setting jenkins source
+    shell: sudo su - root -c 'wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add -'
+    args:
+        executable: /bin/bash
+  - name: adding jenkins key
+    shell: sudo su - root -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+    args:
+        executable: /bin/bash
+  - name: setting java 8 source
+    shell: sudo su - root -c 'sudo add-apt-repository ppa:openjdk-r/ppa'
+    args:
+        executable: /bin/bash
+  - name: installing Nginx, Java, Jenkins, Git, Maven
+    apt: name={{item}} state=installed update_cache=true
+    with_items:
+      - nginx
+      - openjdk-8-jdk
+      - jenkins
+      - git
+      - maven
+
+  - name: starting nginx
+    service: name=nginx state=started
+
+  - name: Copying configuration for overriding security
+    copy: src=override_security_config.xml dest=/tmp/config.xml
+          owner=jenkins group=jenkins mode=755
+
+  - name: stopping jenkins
+    shell: sudo su - root -c 'service jenkins stop'
+    args:
+      executable: /bin/bash
+
+  - name: updating configuration to disable security
+    sudo: true
+    lineinfile: dest=/etc/default/jenkins
+                regexp=''
+                insertafter='EOF'
+                line='JAVA_ARGS="-Djenkins.install.runSetupWizard=false"'
+
+  - name: restarting jenkins
+    shell: sudo su - root -c 'service jenkins restart'
+    args:
+      executable: /bin/bash
+
+  - name: waiting for jenkins to be ready
+    uri: url="http://localhost:8080" status_code=200
+    register: result
+    until: result.status == 200
+    retries: 60
+    delay: 1
+
+#  - name: installing git plugin
+#    jenkins_plugin: name=github state=present
+
+  - name: restarting jenkins again
+    shell: sudo su - root -c 'service jenkins restart'
+    args:
+      executable: /bin/bash
+
+  - name: waiting for jenkins to be ready
+    uri: url="http://localhost:8080" status_code=200
+    register: result
+    until: result.status == 200
+    retries: 60
+    delay: 1
+
+  - name: downloading jenkins cli
+    sudo: true
+    get_url: url=http://localhost:8080/jnlpJars/jenkins-cli.jar dest=/var/lib/jenkins/cli.jar
+      owner=jenkins group=jenkins mode=755
+
+  - name: sending job config file
+    copy: src=config.xml dest=/tmp/config.xml
+          owner=jenkins group=jenkins mode=755
+
+  - name: creating job
+    shell: java -jar /var/lib/jenkins/cli.jar -s http://localhost:8080 create-job hw1b < /tmp/config.xml || true
+        owner=jenkins group=jenkins mode=755
+
+  - name: building the new job
+    shell: java -jar /var/lib/jenkins/cli.jar -s http://localhost:8080 build hw1b
