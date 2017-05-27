@@ -1,5 +1,5 @@
-[<img src="https://github.com/shrenujgandhi/Readme-Images/blob/master/AP.png" width="150">](https://github.com/shrenujgandhi/Build-and-Deployment-Pipeline)
-[<img src="https://github.com/shrenujgandhi/Readme-Images/blob/master/DO.png" width="90">](https://github.com/shrenujgandhi/Build-and-Deployment-Pipeline)
+[<img src="https://github.com/shrenujgandhi/Readme-Images/blob/master/AP.png" width="150">](https://github.com/shrenujgandhi/Provisioning-Servers)
+[<img src="https://github.com/shrenujgandhi/Readme-Images/blob/master/DO.png" width="90">](https://github.com/shrenujgandhi/Provisioning-Servers)
 
 # Provisioning-Servers
 JavaScript and Python scripts to spawn AWS EC2 and DigitalOcean Droplet instances
